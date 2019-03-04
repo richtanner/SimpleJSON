@@ -10,30 +10,50 @@ import UIKit
 
 class DataManager: NSObject {
     
-    func getData() {
+    let MYJSONURL = "https://api.myjson.com/bins/136w0u"
+    
+    var dataArray = ["No data yet, Captain!"]
+    
+    func getData(completion: @escaping (_ success: Bool) -> ()) {
+        var success = true
         
-        let urlString = "https://api.myjson.com/bins/136w0u"
+        let actualUrl = URL(string: MYJSONURL)
         
-        let actualUrl = URL(string: urlString)
-        
-        let session = URLSession.shared
-        
-        let task = session.dataTask(with: actualUrl!) { (data, response, error) in
+        let task = URLSession.shared.dataTask(with: actualUrl!) { (data, response, error) in
             
-            if error != nil {
-                // handle the error
+            guard let _ = data, error == nil else {
+                // we had an error or the data didn't come back
+                success = false
+                return
             }
             
-            if let successfulData = data {
-                print(String(data: successfulData, encoding: String.Encoding.ascii))
-                
-                
-            }
             
+            /********* NEW GOODNESS *********/
+            if let jsonObj = try? JSONSerialization.jsonObject(with: data!, options: .allowFragments) as? NSDictionary {
+                
+                //printing the json in console
+                print(jsonObj!.value(forKey: "characters")!)
+                
+                //getting the characters tag array from json and converting it to NSArray
+                if let veggieArray = jsonObj!.value(forKey: "characters") as? Array<String> {
+                    self.dataArray = veggieArray
+                }
+            }
+            /********* /NEW GOODNESS *********/
+            
+            
+            // old code to print the things
+//            if let successfulData = data {
+//                print(String(data: successfulData, encoding: String.Encoding.ascii))
+//            }
+            
+            
+            // call back to the completion handler that was passed in, notifying to do things (we don't care what)
+            completion(success)
         }
         task.resume()
         
-        
     }
+    
 
 }
